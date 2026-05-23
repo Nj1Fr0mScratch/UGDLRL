@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geometry Dash Level Rater</title>
+    <style>
+        @font-face {
+            font-family: 'GDFont';
+            src: url('assets/font.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        body, h1, h2, label, .save-btn, .dev-toggle-btn, .badge, .expand-toggle-btn, .edit-btn, .delete-btn {
+            font-family: 'GDFont', 'Impact', sans-serif !important;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            letter-spacing: 1px;
+            background: #181b2a;
+            background-image: 
+                linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 30px 30px;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .top-navbar {
+            width: 100%;
+            max-width: 620px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .dev-toggle-btn {
+            background: #bf55ec;
+            border: 3px solid #fff;
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            box-shadow: 0 4px 0 #8e44ad;
+        }
+        .dev-toggle-btn:hover { background: #be90d4; }
+
+        .container {
+            background: #252525;
+            padding: 35px;
+            border-radius: 12px;
+            box-shadow: 0 8px 0 #151515, 0 15px 20px rgba(0,0,0,0.6);
+            border: 4px solid #ea4335;
+            width: 100%;
+            max-width: 520px;
+            text-align: center;
+            margin-bottom: 30px;
+            display: none;
+        }
+
+        h1 {
+            color: #ea4335;
+            margin: 0 0 20px 0;
+            text-transform: uppercase;
+            font-size: 2.2rem;
+            -webkit-text-stroke: 1px #000;
+            text-shadow: 2px 2px 0 #000;
+        }
+
+        .rating-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        .inline-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .inline-group .rating-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            color: #fff;
+            font-size: 1rem;
+            text-transform: uppercase;
+            text-shadow: 1px 1px 0 #000;
+        }
+
+        input[type="text"], input[type="number"], select, textarea {
+            width: 100%;
+            padding: 10px;
+            background: #111;
+            border: 3px solid #444;
+            color: #00ffcc;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 0.95rem;
+            font-family: sans-serif;
+            font-weight: bold;
+        }
+        
+        input[type="text"]:focus, select:focus, textarea:focus {
+            border-color: #00ffcc;
+            outline: none;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            margin-bottom: 5px;
+            accent-color: #00ffcc;
+        }
+
+        .slider-val {
+            float: right;
+            color: #ffff00;
+            text-shadow: 1px 1px 0 #000;
+        }
+
+        .save-btn {
+            width: 100%;
+            background: #2ecc71;
+            color: white;
+            border: 3px solid #fff;
+            padding: 14px;
+            font-size: 1.3rem;
+            border-radius: 8px;
+            cursor: pointer;
+            text-transform: uppercase;
+            box-shadow: 0 5px 0 #27ae60;
+        }
+        .save-btn:hover { background: #27ae60; }
+
+        .history-box {
+            width: 100%;
+            max-width: 620px;
+            background: #212435;
+            border-radius: 10px;
+            padding: 25px;
+            box-sizing: border-box;
+            border: 4px solid #00bcff;
+            box-shadow: 0 8px 0 #121420, 0 12px 20px rgba(0,0,0,0.5);
+        }
+
+        .history-box h2 {
+            color: #00bcff;
+            margin-top: 0;
+            font-size: 1.8rem;
+            text-transform: uppercase;
+            border-bottom: 3px solid #121420;
+            padding-bottom: 10px;
+            text-shadow: 2px 2px 0 #000;
+        }
+
+        .level-item {
+            background: #181b2a;
+            border: 3px solid #2d324d;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+        }
+
+        .level-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+
+        .level-info-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex: 1;
+        }
+
+        .difficulty-face {
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
+            filter: drop-shadow(2px 2px 0px #000);
+        }
+
+        .badge {
+            font-size: 0.75rem;
+            padding: 3px 8px;
+            border-radius: 4px;
+            margin-left: 4px;
+            display: inline-block;
+            vertical-align: middle;
+            border: 1px solid rgba(255,255,255,0.3);
+            text-transform: uppercase;
+        }
+        .aredl-badge { background: #ff9f43; color: #000; }
+        .length-badge { background: #5f27cd; color: #fff; }
+
+        .level-metadata-line {
+            font-size: 0.9rem;
+            color: #a0a0a0;
+            margin-top: 4px;
+            font-family: sans-serif;
+            font-weight: normal;
+        }
+        .level-metadata-line a {
+            color: #00ffcc;
+            text-decoration: none;
+        }
+
+        .level-scores-line {
+            font-size: 0.95rem;
+            color: #ffff00;
+            margin-top: 4px;
+            font-family: sans-serif;
+            font-weight: bold;
+        }
+
+        .expand-toggle-btn {
+            background: none;
+            border: none;
+            color: #00bcff;
+            cursor: pointer;
+            font-size: 0.85rem;
+            text-align: left;
+            padding: 0;
+            margin-top: 5px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .expand-toggle-btn:hover { color: #fff; }
+
+        .collapsible-content {
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+            border-top: 2px dashed #2d324d;
+            padding-top: 10px;
+            margin-top: 5px;
+        }
+
+        .level-description {
+            background: rgba(0, 0, 0, 0.4);
+            border-left: 4px solid #ffff00;
+            padding: 12px;
+            border-radius: 4px;
+            font-size: 0.95rem;
+            color: #dddddd;
+            font-family: sans-serif;
+            line-height: 1.4;
+            word-wrap: break-word;
+        }
+
+        .action-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .play-btn {
+            background: #2ecc71;
+            color: #fff;
+            border: 2px solid #fff;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 3px 0 #27ae60;
+        }
+        .play-btn:hover { background: #27ae60; }
+
+        .edit-btn {
+            background: #3498db;
+            color: white;
+            border: 2px solid #fff;
+            padding: 6px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            box-shadow: 0 3px 0 #2980b9;
+            display: none;
+        }
+        .edit-btn:hover { background: #2980b9; }
+
+        .delete-btn {
+            background: #e74c3c;
+            color: white;
+            border: 2px solid #fff;
+            padding: 6px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            box-shadow: 0 3px 0 #c0392b;
+            display: none;
+        }
+        .delete-btn:hover { background: #c0392b; }
+
+        /* Diamond Badges */
+        .rank-diamond-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            margin-right: 8px;
+            position: relative;
+        }
+        .rank-diamond {
+            width: 24px;
+            height: 24px;
+            background: #ff2222;
+            border: 2px solid #ffffff;
+            transform: rotate(45deg);
+            position: absolute;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+        .rank-number {
+            position: absolute;
+            font-size: 0.9rem;
+            color: #ffffff;
+            font-weight: bold;
+            text-shadow: 1px 1px 0px #000;
+            z-index: 2;
+        }
+
+        .toast-notification {
+            position: fixed;
+            bottom: 30px;
+            background: #ffff00;
+            color: #000;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-weight: bold;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            z-index: 999;
+            text-transform: uppercase;
+            border: 2px solid #000;
+        }
+    </style>
+</head>
+<body>
+
+<div class="top-navbar">
+    <span id="mode-indicator" style="font-weight: bold; color: #a0a0a0; text-transform: uppercase;">Viewer Mode</span>
+    <div id="auth-area" style="display: flex; gap: 8px; align-items: center;">
+        <input type="password" id="adminPasswordInput" placeholder="Enter Key..." style="width: 140px; padding: 6px; display: none;">
+        <button id="toggleDevMode" class="dev-toggle-btn" onclick="handleAuthAction()">Dev Panel</button>
+    </div>
+</div>
+
+    <div id="devPanel" class="container">
+        <h1 id="panelTitle">Developer Panel</h1>
+
+        <div class="inline-group">
+            <div class="rating-group" style="flex: 2;">
+                <label for="levelName">Level Name:</label>
+                <input type="text" id="levelName" placeholder="e.g., Bloodbath">
+            </div>
+            <div class="rating-group" style="flex: 1;">
+                <label for="levelCreator">Creator:</label>
+                <input type="text" id="levelCreator" placeholder="Riot">
+            </div>
+        </div>
+
+        <div class="inline-group">
+            <div class="rating-group">
+                <label for="levelId">Level ID:</label>
+                <input type="text" id="levelId" placeholder="10565706">
+            </div>
+            <div class="rating-group">
+                <label for="length">Length:</label>
+                <select id="length">
+                    <option value="Tiny">Tiny</option>
+                    <option value="Short">Short</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Long">Long</option>
+                    <option value="XL">XL</option>
+                    <option value="Platformer">Platformer</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="rating-group">
+            <label for="difficulty">Difficulty:</label>
+            <select id="difficulty" onchange="checkAREDLVisibility()">
+                <option value="a">Auto</option>
+                <option value="e">Easy</option>
+                <option value="n">Normal</option>
+                <option value="h">Hard</option>
+                <option value="hr">Harder</option>
+                <option value="i">Insane</option>
+                <option value="ez">Easy Demon</option>
+                <option value="md">Medium Demon</option>
+                <option value="hd">Hard Demon</option>
+                <option value="id">Insane Demon</option>
+                <option value="ex">Extreme Demon</option>
+            </select>
+        </div>
+
+        <div class="inline-group" id="aredl-container" style="display: none;">
+            <div class="rating-group">
+                <label for="aredlRank">AREDL Placement:</label>
+                <input type="number" id="aredlRank" min="1" placeholder="Rank #">
+            </div>
+            <div class="rating-group">
+                <label for="verifierLink">Verifier Video URL:</label>
+                <input type="text" id="verifierLink" placeholder="https://youtube.com/...">
+            </div>
+        </div>
+
+        <div class="inline-group">
+            <div class="rating-group" style="flex: 1;">
+                <label for="audioPlatform">Audio Platform:</label>
+                <select id="audioPlatform">
+                    <option value="Newgrounds">Newgrounds</option>
+                    <option value="NCS">NCS</option>
+                    <option value="Chompo">Chompo</option>
+                    <option value="Custom Audio">Custom / Other</option>
+                </select>
+            </div>
+            <div class="rating-group" style="flex: 1.5;">
+                <label for="audioUrl">Song URL Link:</label>
+                <input type="text" id="audioUrl" placeholder="https://...">
+            </div>
+        </div>
+
+        <div class="rating-group">
+            <label for="gameplay">Gameplay: <span id="gameplay-val" class="slider-val">5</span></label>
+            <input type="range" id="gameplay" min="1" max="10" value="5" oninput="updateLabel('gameplay')">
+        </div>
+
+        <div class="rating-group">
+            <label for="decoration">Decoration: <span id="decoration-val" class="slider-val">5</span></label>
+            <input type="range" id="decoration" min="1" max="10" value="5" oninput="updateLabel('decoration')">
+        </div>
+
+        <div class="rating-group">
+            <label for="sync">Song & Sync: <span id="sync-val" class="slider-val">5</span></label>
+            <input type="range" id="sync" min="1" max="10" value="5" oninput="updateLabel('sync')">
+        </div>
+
+        <div class="rating-group">
+            <label for="description">Review Notes / Description:</label>
+            <textarea id="description" placeholder="Write your full structural review..."></textarea>
+        </div>
+
+        <button id="submitBtn" class="save-btn" onclick="saveLevelRating()">Publish Rating</button>
+    </div>
+
+    <div class="history-box">
+        <h2>Level Ratings List</h2>
+        <div id="history-list"></div>
+    </div>
+
+    <div id="toast" class="toast-notification">ID Copied!</div>
+
+    <script>
+        let isDevMode = false;
+        let editingLevelId = null; // Tracks if we are modifying an existing review entry
+
+        // Secure SHA-256 Hashing Engine Functionality
+        async function sha256(message) {
+            const msgBuffer = new TextEncoder().encode(message);                    
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        window.onload = function() {
+            displaySavedLevels();
+        };
+
+        async function toggleDevPanel() {
+            if (!isDevMode) {
+                let password = prompt("Enter Administration Password Key:");
+                if (!password) return;
+                
+                // Hashes input on the fly to protect your text credentials
+                let hashedInput = await sha256(password);
+                const targetMasterHash = "7b420076a084e493a61d6cb50a582bf6b9b1e9c52086df1e102dbd6ec036495b"; // 'gdrater'
+
+                if (hashedInput === targetMasterHash) {
+                    isDevMode = true;
+                    document.getElementById('devPanel').style.display = 'block';
+                    document.getElementById('toggleDevMode').innerText = "Close Panel";
+                    document.querySelector('.top-navbar span').innerText = "Admin Running";
+                    document.querySelector('.top-navbar span').style.color = "#ea4335";
+                } else {
+                    alert("Invalid Developer Key credentials.");
+                }
+            } else {
+                isDevMode = false;
+                clearFormFields();
+                document.getElementById('devPanel').style.display = 'none';
+                document.getElementById('toggleDevMode').innerText = "Dev Panel";
+                document.querySelector('.top-navbar span').innerText = "Viewer Mode";
+                document.querySelector('.top-navbar span').style.color = "#a0a0a0";
+            }
+            displaySavedLevels();
+        }
+
+        function checkAREDLVisibility() {
+            const diff = document.getElementById('difficulty').value;
+            const aredlField = document.getElementById('aredl-container');
+            if (diff === 'ex') {
+                aredlField.style.display = 'flex';
+            } else {
+                aredlField.style.display = 'none';
+                document.getElementById('aredlRank').value = '';
+                document.getElementById('verifierLink').value = '';
+            }
+        }
+
+        function updateLabel(id) {
+            const val = document.getElementById(id).value;
+            document.getElementById(id + '-val').innerText = val;
+        }
+
+        function clearFormFields() {
+            editingLevelId = null;
+            document.getElementById('panelTitle').innerText = "Developer Panel";
+            document.getElementById('submitBtn').innerText = "Publish Rating";
+            document.getElementById('levelName').value = '';
+            document.getElementById('levelCreator').value = '';
+            document.getElementById('levelId').value = '';
+            document.getElementById('description').value = '';
+            document.getElementById('audioUrl').value = '';
+            document.getElementById('aredlRank').value = '';
+            document.getElementById('verifierLink').value = '';
+            document.getElementById('gameplay').value = 5;
+            document.getElementById('decoration').value = 5;
+            document.getElementById('sync').value = 5;
+            updateLabel('gameplay');
+            updateLabel('decoration');
+            updateLabel('sync');
+            checkAREDLVisibility();
+        }
+
+        function saveLevelRating() {
+            const name = document.getElementById('levelName').value.trim();
+            const creator = document.getElementById('levelCreator').value.trim() || "Unknown";
+            const lvlId = document.getElementById('levelId').value.trim() || "No ID Added";
+            const descriptionText = document.getElementById('description').value.trim();
+            const length = document.getElementById('length').value;
+            const difficultyCode = document.getElementById('difficulty').value;
+            const aredlRank = document.getElementById('aredlRank').value.trim();
+            const verifierLink = document.getElementById('verifierLink').value.trim();
+            const audioPlatform = document.getElementById('audioPlatform').value;
+            const audioUrl = document.getElementById('audioUrl').value.trim();
+
+            if (!name) {
+                alert("Please enter a Level Name.");
+                return;
+            }
+
+            const gameplay = parseFloat(document.getElementById('gameplay').value);
+            const decoration = parseFloat(document.getElementById('decoration').value);
+            const sync = parseFloat(document.getElementById('sync').value);
+            const average = ((gameplay + decoration + sync) / 3).toFixed(1);
+
+            let savedLevels = JSON.parse(localStorage.getItem('gdLevels')) || [];
+
+            if (editingLevelId !== null) {
+                // Modifying an old entry inside your arrays
+                savedLevels = savedLevels.map(level => {
+                    if (level.id === editingLevelId) {
+                        return {
+                            ...level,
+                            name, creator, lvlId, description: descriptionText, length,
+                            difficulty: difficultyCode, aredl: aredlRank ? parseInt(aredlRank) : null,
+                            verifierLink, audioPlatform, audioUrl, gameplay, decoration, sync,
+                            overall: parseFloat(average)
+                        };
+                    }
+                    return level;
+                });
+                showToast("Rating Updated!");
+            } else {
+                // Creating a brand new record entry
+                const newLevelRating = {
+                    id: Date.now(),
+                    name, creator, lvlId, description: descriptionText, length,
+                    difficulty: difficultyCode, aredl: aredlRank ? parseInt(aredlRank) : null,
+                    verifierLink, audioPlatform, audioUrl, gameplay, decoration, sync,
+                    overall: parseFloat(average)
+                };
+                savedLevels.push(newLevelRating);
+                showToast("Rating Published!");
+            }
+
+            localStorage.setItem('gdLevels', JSON.stringify(savedLevels));
+            clearFormFields();
+            displaySavedLevels();
+        }
+
+        // Pulls structured entry attributes back into editor controls
+        function loadLevelIntoEditor(id) {
+            let savedLevels = JSON.parse(localStorage.getItem('gdLevels')) || [];
+            const target = savedLevels.find(l => l.id === id);
+            if (!target) return;
+
+            editingLevelId = id;
+            document.getElementById('panelTitle').innerText = "Editing: " + target.name;
+            document.getElementById('submitBtn').innerText = "Save Adjustments";
+
+            document.getElementById('levelName').value = target.name;
+            document.getElementById('levelCreator').value = target.creator || '';
+            document.getElementById('levelId').value = target.lvlId === "No ID Added" ? '' : target.lvlId;
+            document.getElementById('length').value = target.length || 'Medium';
+            document.getElementById('difficulty').value = target.difficulty || 'e';
+            
+            checkAREDLVisibility();
+            if (target.difficulty === 'ex') {
+                document.getElementById('aredlRank').value = target.aredl || '';
+                document.getElementById('verifierLink').value = target.verifierLink || '';
+            }
+
+            document.getElementById('audioPlatform').value = target.audioPlatform || 'Newgrounds';
+            document.getElementById('audioUrl').value = target.audioUrl || '';
+            
+            document.getElementById('gameplay').value = target.gameplay || 5;
+            document.getElementById('decoration').value = target.decoration || 5;
+            document.getElementById('sync').value = target.sync || 5;
+            
+            updateLabel('gameplay');
+            updateLabel('decoration');
+            updateLabel('sync');
+            document.getElementById('description').value = target.description || '';
+
+            // Instantly scrolls back to top workspace window
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function copyIdToClipboard(idText) {
+            if (idText === "No ID Added") {
+                showToast("No ID tied to this level!");
+                return;
+            }
+            navigator.clipboard.writeText(idText).then(() => {
+                showToast(`Copied ID: ${idText}`);
+            }).catch(err => console.error(err));
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.innerText = message;
+            toast.style.opacity = '1';
+            setTimeout(() => { toast.style.opacity = '0'; }, 2000);
+        }
+
+        function toggleLevelDetails(id) {
+            const contentDiv = document.getElementById(`details-${id}`);
+            const toggleBtn = document.getElementById(`btn-${id}`);
+            if (contentDiv.style.display === "flex") {
+                contentDiv.style.display = "none";
+                toggleBtn.innerText = "▼ EXPAND DETAILS";
+            } else {
+                contentDiv.style.display = "flex";
+                toggleBtn.innerText = "▲ COLLAPSE DETAILS";
+            }
+        }
+
+        function displaySavedLevels() {
+            const historyList = document.getElementById('history-list');
+            let savedLevels = JSON.parse(localStorage.getItem('gdLevels')) || [];
+
+            if (savedLevels.length === 0) {
+                historyList.innerHTML = '<p style="color: #666; text-align: center; text-transform: uppercase;">No levels published yet.</p>';
+                return;
+            }
+
+            // Data sanitization step
+            savedLevels.forEach(level => {
+                level.overall = parseFloat(level.overall || 0);
+            });
+
+            // Sort descending by highest scores
+            savedLevels.sort((a, b) => b.overall - a.overall);
+
+            historyList.innerHTML = savedLevels.map((level, index) => {
+                const currentId = level.id || Date.now();
+                const currentName = level.name || "Unnamed Level";
+                const currentDifficulty = level.difficulty || "e";
+                const currentLength = level.length || "Medium";
+                const currentCreator = level.creator || "Unknown Creator";
+                const currentLvlId = level.lvlId || "No ID Added";
+                
+                const imagePath = `assets/${currentDifficulty}.png`;
+                
+                const rankPosition = index + 1;
+                let rankBadgeElement = '';
+                if (rankPosition <= 25) {
+                    rankBadgeElement = `
+                        <div class="rank-diamond-container" title="Ranked #${rankPosition}">
+                            <div class="rank-diamond"></div>
+                            <span class="rank-number">${rankPosition}</span>
+                        </div>
+                    `;
+                }
+                
+                let aredlElement = level.aredl ? `<span class="badge aredl-badge">AREDL #${level.aredl}</span>` : '';
+                let lengthElement = `<span class="badge length-badge">${currentLength}</span>`;
+                
+                // Show Edit and Delete administrative controls inside Dev Panel Mode
+                let adminControls = '';
+                if (isDevMode) {
+                    adminControls = `
+                        <button class="edit-btn" style="display:block;" onclick="loadLevelIntoEditor(${currentId})">Edit</button>
+                        <button class="delete-btn" style="display:block;" onclick="deleteLevel(${currentId})">Delete</button>
+                    `;
+                }
+                
+                let audioLinkElement = '';
+                if(level.audioUrl && level.audioPlatform) {
+                    audioLinkElement = ` | Song Track: <a href="${level.audioUrl}" target="_blank">${level.audioPlatform} 🔗</a>`;
+                }
+
+                let verifierElement = '';
+                if(level.aredl && level.verifierLink) {
+                    verifierElement = `<div>Verifier Showcase: <a href="${level.verifierLink}" target="_blank">Watch Video 🔗</a></div>`;
+                }
+
+                let descElement = level.description ? `<div class="level-description">${level.description}</div>` : '<div class="level-description" style="color:#777; font-style:italic;">No written review description provided.</div>';
+
+                return `
+                    <div class="level-item">
+                        <div class="level-header-row">
+                            <div class="level-info-wrapper">
+                                ${rankBadgeElement}
+                                <img src="${imagePath}" alt="Diff" class="difficulty-face" onerror="this.style.display='none'">
+                                <div style="text-align: left;">
+                                    <strong style="font-size: 1.4rem; color: #fff; text-shadow: 1px 1px 0 #000;">${currentName}</strong> 
+                                    ${lengthElement}
+                                    ${aredlElement}
+                                    <span style="color: #00ffcc; font-weight: bold; margin-left: 10px; text-shadow: 1px 1px 0 #000;">${level.overall.toFixed(1)}/10</span>
+                                    
+                                    <div class="level-metadata-line">
+                                        By: <strong>${currentCreator}</strong>${audioLinkElement}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="action-controls">
+                                <button class="play-btn" onclick="copyIdToClipboard('${currentLvlId}')" title="Copy Level ID">▶</button>
+                                ${adminControls}
+                            </div>
+                        </div>
+
+                        <button id="btn-${currentId}" class="expand-toggle-btn" onclick="toggleLevelDetails(${currentId})">▼ EXPAND DETAILS</button>
+                        
+                        <div id="details-${currentId}" class="collapsible-content">
+                            <div class="level-scores-line">
+                                GP: ${level.gameplay || 0} | DECO: ${level.decoration || 0} | SYNC: ${level.sync || 0}
+                            </div>
+                            ${verifierElement}
+                            ${descElement}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function deleteLevel(id) {
+            if (!confirm("Are you sure you want to completely delete this review entry?")) return;
+            let savedLevels = JSON.parse(localStorage.getItem('gdLevels')) || [];
+            savedLevels = savedLevels.filter(level => level.id !== id);
+            localStorage.setItem('gdLevels', JSON.stringify(savedLevels));
+            if (editingLevelId === id) clearFormFields();
+            displaySavedLevels();
+        }
+
+        // Handles clicking the main action button
+const totpSecret = "JBSWY3DPEHPK3PXP";
+
+
+    // A self-contained, native browser Base32 decoder and TOTP generator
+// No third-party script libraries or storage required!
+
+function base32ToBuf(base32) {
+    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+    let cleaned = base32.replace(/=+$/, '').toUpperCase();
+    let length = cleaned.length;
+    let bits = 0;
+    let value = 0;
+    let index = 0;
+    let buffer = new Uint8Array(Math.floor((length * 5) / 8));
+
+    for (let i = 0; i < length; i++) {
+        let val = alphabet.indexOf(cleaned.charAt(i));
+        if (val === -1) throw new Error("Invalid Base32 character");
+        value = (value << 5) | val;
+        bits += 5;
+        if (bits >= 8) {
+            bits -= 8;
+            buffer[index++] = (value >>> bits) & 255;
+        }
+    }
+    return buffer.buffer;
+}
+
+async function generateNativeTOTP(secret) {
+    // 1. Get current 30-second time step window
+    const timeIndex = Math.floor(Date.now() / 30000);
+    const timeBuffer = new ArrayBuffer(8);
+    const view = new DataView(timeBuffer);
+    
+    // Write timeIndex into a 64-bit integer buffer
+    view.setUint32(4, timeIndex & 0xffffffff);
+    view.setUint32(0, Math.floor(timeIndex / 0x100000000));
+
+    // 2. Decode the Base32 secret string key into a raw crypto key
+    const keyData = base32ToBuf(secret);
+    const cryptoKey = await window.crypto.subtle.importKey(
+        "raw",
+        keyData,
+        { name: "HMAC", hash: { name: "SHA-1" } },
+        false,
+        ["sign"]
+    );
+
+    // 3. Calculate the standard HMAC-SHA1 signature
+    const signatureBuffer = await window.crypto.subtle.sign("HMAC", cryptoKey, timeBuffer);
+    const signature = new Uint8Array(signatureBuffer);
+
+    // 4. Extract the dynamic binary 6-digit truncation token string
+    const offset = signature[signature.length - 1] & 0xf;
+    const binary = ((signature[offset] & 0x7f) << 24) |
+                   ((signature[offset + 1] & 0xff) << 16) |
+                   ((signature[offset + 2] & 0xff) << 8) |
+                   (signature[offset + 3] & 0xff);
+
+    const token = binary % 1000000;
+    return String(token).padStart(6, '0');
+}
+
+// Your rewritten, tracking-safe authentication block
+async function handleAuthAction() {
+    const passwordInput = document.getElementById('adminPasswordInput');
+    
+    if (!isDevMode) {
+        if (passwordInput.style.display === 'none') {
+            passwordInput.style.display = 'block';
+            passwordInput.placeholder = "Enter 6-Digit Code";
+            passwordInput.value = '';
+            passwordInput.maxLength = 6;
+            passwordInput.focus();
+            document.getElementById('toggleDevMode').innerText = "Verify";
+            return;
+        }
+        
+        // Strip out any empty spaces left behind by typing or copy-pasting
+        const userToken = passwordInput.value.replace(/\D/g, '');
+        if (!userToken) {
+            passwordInput.style.display = 'none';
+            document.getElementById('toggleDevMode').innerText = "Dev Panel";
+            return;
+        }
+
+        try {
+            // Generate what your phone's authentication app currently expects
+            const expectedToken = await generateNativeTOTP(totpSecret);
+
+            if (userToken === expectedToken) {
+                isDevMode = true;
+                passwordInput.value = '';
+                passwordInput.style.display = 'none';
+                
+                document.getElementById('devPanel').style.display = 'block';
+                document.getElementById('toggleDevMode').innerText = "Log Out";
+                document.getElementById('toggleDevMode').style.background = '#e74c3c';
+                document.getElementById('toggleDevMode').style.boxShadow = '0 4px 0 #c0392b';
+                
+                document.getElementById('mode-indicator').innerText = "Admin Running";
+                document.getElementById('mode-indicator').style.color = "#ea4335";
+            } else {
+                alert("Invalid verification code or token expired. Try again.");
+                passwordInput.value = '';
+                passwordInput.focus();
+            }
+        } catch (err) {
+            console.error("Local crypto failed:", err);
+            alert("Error: Your browser needs a secure origin environment (like HTTPS or localhost) to use cryptography.");
+        }
+    } else {
+        isDevMode = false;
+        clearFormFields();
+        passwordInput.value = '';
+        passwordInput.style.display = 'none';
+        
+        document.getElementById('devPanel').style.display = 'none';
+        document.getElementById('toggleDevMode').innerText = "Dev Panel";
+        document.getElementById('toggleDevMode').style.background = '#bf55ec';
+        document.getElementById('toggleDevMode').style.boxShadow = '0 4px 0 #8e44ad';
+        
+        document.getElementById('mode-indicator').innerText = "Viewer Mode";
+        document.getElementById('mode-indicator').style.color = "#a0a0a0";
+    }
+    displaySavedLevels();
+}
+    </script>
+</body>
+</html>
